@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今天喝什么奶茶？- 水豚版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            /* 水豚背景图 - 平铺+透明+固定 */
+            background: 
+                linear-gradient(rgba(245, 247, 250, 0.9), rgba(195, 207, 226, 0.9)),
+                url('https://picsum.photos/id/239/1920/1080') center/cover fixed no-repeat;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95); /* 半透明白底，突出内容 */
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            margin-top: 50px;
+            backdrop-filter: blur(8px); /* 毛玻璃效果，适配背景 */
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+            position: relative;
+        }
+
+        h1::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 3px;
+            background: #ff6b8b;
+            margin: 10px auto 0;
+            border-radius: 3px;
+        }
+
+        /* 添加奶茶区域 */
+        .add-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        #milkTeaInput {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        #milkTeaInput:focus {
+            border-color: #ff6b8b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 139, 0.2);
+            transform: translateY(-2px);
+        }
+
+        #addBtn {
+            padding: 12px 25px;
+            background: #ff6b8b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #addBtn:hover {
+            background: #ff4757;
+        }
+
+        /* 奶茶列表区域 */
+        .list-section {
+            margin-bottom: 30px;
+        }
+
+        .list-title {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        #milkTeaList {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .milk-tea-item {
+            background: #f8f9fa;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        .milk-tea-item:hover {
+            background: #ffe0e6;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(255, 107, 139, 0.15);
+        }
+
+        .delete-btn {
+            color: #ff6b8b;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .delete-btn:hover {
+            color: #ff4757;
+            transform: scale(1.2);
+        }
+
+        /* 抽签区域 */
+        .draw-section {
+            text-align: center;
+        }
+
+        #drawBtn {
+            padding: 15px 40px;
+            background: #2ed573;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        #drawBtn:hover {
+            background: #27ae60;
+            transform: scale(1.05);
+        }
+
+        #drawBtn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #result {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6b8b;
+            min-height: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            background: #fef7fb;
+            margin-bottom: 20px;
+        }
+
+        #resetBtn {
+            padding: 10px 20px;
+            background: #70a1ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #resetBtn:hover {
+            background: #57606f;
+        }
+
+        /* 通用按钮点击效果 */
+        button:active {
+            transform: scale(0.95);
+            transition: transform 0.1s ease;
+        }
+
+        /* 动画效果 */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .drawing {
+            animation: spin 0.5s linear infinite;
+        }
+
+        /* 新增标签滑入动画 */
+        @keyframes slideIn {
+            0% {
+                transform: translateX(50px) scale(0.8);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* 结果弹跳动画 */
+        @keyframes bounce {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .result-bounce {
+            animation: bounce 0.6s ease forwards;
+        }
+
+        /* 自定义提示框样式 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 9999;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+                margin-top: 30px;
+            }
+            .add-section {
+                flex-direction: column;
+            }
+            #drawBtn {
+                padding: 12px 30px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 今天喝什么奶茶？</h1>
+
+        <!-- 添加奶茶区域 -->
+        <div class="add-section">
+            <input type="text" id="milkTeaInput" placeholder="输入奶茶品牌/名称，例如：喜茶、一点点">
+            <button id="addBtn">添加</button>
+        </div>
+
+        <!-- 奶茶列表区域 -->
+        <div class="list-section">
+            <div class="list-title">已添加的奶茶：</div>
+            <div id="milkTeaList"></div>
+        </div>
+
+        <!-- 抽签区域 -->
+        <div class="draw-section">
+            <button id="drawBtn" disabled>开始抽签</button>
+            <div id="result">点击上方按钮开始抽签～</div>
+            <button id="resetBtn">重置结果</button>
+        </div>
+    </div>
+
+    <!-- 音效资源 -->
+    <audio id="addSound" src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3" preload="auto"></audio>
+    <audio id="drawSound" src="https://assets.mixkit.co/sfx/preview/mixkit-lottery-wheel-spinning-1994.mp3" preload="auto"></audio>
+    <audio id="resultSound" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" preload="auto"></audio>
+    <audio id="deleteSound" src="https://assets.mixkit.co/sfx/preview/mixkit-ui-click-tone-1117.mp3" preload="auto"></audio>
+    
+    <!-- 自定义提示框 -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // 初始化变量 - 预设常见奶茶品牌
+        let milkTeaArray = [
+            "喜茶", "一点点", "奈雪的茶", "蜜雪冰城", "古茗", 
+            "茶百道", "沪上阿姨", "CoCo都可", "瑞幸咖啡", "霸王茶姬",
+            "书亦烧仙草", "益禾堂", "茶颜悦色", "柠季", "乐乐茶"
+        ];
+        
+        // 获取DOM元素
+        const milkTeaInput = document.getElementById('milkTeaInput');
+        const addBtn = document.getElementById('addBtn');
+        const milkTeaList = document.getElementById('milkTeaList');
+        const drawBtn = document.getElementById('drawBtn');
+        const result = document.getElementById('result');
+        const resetBtn = document.getElementById('resetBtn');
+        const toast = document.getElementById('toast');
+
+        // 自定义提示框函数
+        function showToast(text, duration = 2000) {
+            toast.textContent = text;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
+
+        // 添加奶茶函数
+        function addMilkTea() {
+            const value = milkTeaInput.value.trim();
+            
+            // 验证输入
+            if (!value) {
+                showToast('请输入奶茶品牌/名称！');
+                return;
+            }
+            
+            if (milkTeaArray.includes(value)) {
+                showToast('该奶茶已添加过，请勿重复添加！');
+                return;
+            }
+            
+            // 播放添加音效
+            document.getElementById('addSound').play();
+            
+            // 添加到数组
+            milkTeaArray.push(value);
+            
+            // 更新列表显示
+            renderMilkTeaList();
+            
+            // 启用抽签按钮
+            drawBtn.disabled = false;
+            
+            // 清空输入框
+            milkTeaInput.value = '';
+            
+            // 聚焦输入框
+            milkTeaInput.focus();
+
+            // 提示添加成功
+            showToast(`已添加：${value}`);
+        }
+
+        // 渲染奶茶列表
+        function renderMilkTeaList() {
+            // 清空列表
+            milkTeaList.innerHTML = '';
+            
+            // 遍历数组生成列表项
+            milkTeaArray.forEach((item, index) => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'milk-tea-item';
+                itemElement.innerHTML = `
+                    ${item}
+                    <span class="delete-btn" data-index="${index}">×</span>
+                `;
+                milkTeaList.appendChild(itemElement);
+            });
+            
+            // 添加删除事件监听
+            const deleteBtns = document.querySelectorAll('.delete-btn');
+            deleteBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // 播放删除音效
+                    document.getElementById('deleteSound').play();
+                    
+                    const index = parseInt(this.getAttribute('data-index'));
+                    // 获取要删除的元素并添加动画
+                    const itemToDelete = this.parentElement;
+                    itemToDelete.style.transition = 'all 0.3s ease';
+                    itemToDelete.style.opacity = '0';
+                    itemToDelete.style.transform = 'scale(0.8)';
+                    
+                    // 动画结束后再删除数据和DOM
+                    setTimeout(() => {
+                        // 从数组中删除
+                        milkTeaArray.splice(index, 1);
+                        // 重新渲染列表
+                        renderMilkTeaList();
+                        // 如果列表为空，禁用抽签按钮
+                        if (milkTeaArray.length === 0) {
+                            drawBtn.disabled = true;
+                            result.textContent = '点击上方按钮开始抽签～';
+                        }
+                        // 提示删除成功
+                        showToast('已删除选中的奶茶');
+                    }, 300);
+                });
+            });
+
+            // 列表渲染后，若有数据则启用抽签按钮
+            if(milkTeaArray.length > 0) {
+                drawBtn.disabled = false;
+            }
+        }
+
+        // 抽签函数
+        async function drawMilkTea() {
+            // 禁用抽签按钮防止重复点击
+            drawBtn.disabled = true;
+            
+            // 播放抽签音效
+            document.getElementById('drawSound').play();
+            
+            // 抽签动画效果
+            result.textContent = '抽签中...';
+            let count = 0;
+            const totalCount = 20; // 动画次数
+            
+            // 模拟抽签滚动效果
+            const animation = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * milkTeaArray.length);
+                result.textContent = milkTeaArray[randomIndex];
+                count++;
+                
+                if (count >= totalCount) {
+                    clearInterval(animation);
+                    // 播放结果音效
+                    document.getElementById('resultSound').play();
+                    // 最终结果
+                    const finalIndex = Math.floor(Math.random() * milkTeaArray.length);
+                    result.textContent = `🎉 恭喜你！今天喝：${milkTeaArray[finalIndex]} 🎉`;
+                    // 添加弹跳动画
+                    result.classList.add('result-bounce');
+                    // 动画结束后移除类，方便下次抽签
+                    setTimeout(() => {
+                        result.classList.remove('result-bounce');
+                    }, 600);
+                    // 重新启用按钮
+                    drawBtn.disabled = false;
+                }
+            }, 100);
+        }
+
+        // 重置结果函数
+        function resetResult() {
+            result.textContent = '点击上方按钮开始抽签～';
+            showToast('已重置抽签结果');
+        }
+
+        // 绑定事件
+        addBtn.addEventListener('click', addMilkTea);
+        drawBtn.addEventListener('click', drawMilkTea);
+        resetBtn.addEventListener('click', resetResult);
+        
+        // 回车添加奶茶
+        milkTeaInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                addMilkTea();
+            }
+        });
+
+        // 页面加载完成后，自动渲染预设的奶茶列表
+        window.onload = function() {
+            renderMilkTeaList();
+        }
+    </script>
+</body>
+</html>
